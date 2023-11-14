@@ -4,7 +4,7 @@ import os
 
 # Directory containing the images
 directory = 'input'
-
+output = 'darks/'
 # Loop over all files in the directory
 for filename in os.listdir(directory):
     # Check if the file is an image
@@ -20,10 +20,10 @@ for filename in os.listdir(directory):
             # Apply a cooling filter
             # Increase intensity in the blue channel
             # Decrease intensity in the red channel
-            cooled = cv2.addWeighted(image, 0.5, np.zeros(image.shape, image.dtype), 0, -50)
+            cooled = cv2.addWeighted(image, 0.5, np.zeros(image.shape, image.dtype), 0, -30)
 
             # Construct the output file path
-            output_filepath = os.path.join(directory, 'cooled_' + filename)
+            output_filepath = os.path.join(output, 'cooled_' + filename)
 
             # Save the image
             cv2.imwrite(output_filepath, cooled)

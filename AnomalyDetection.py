@@ -5,6 +5,7 @@ import colour
 import numpy as np
 from scipy.signal import convolve2d
 import math
+from PIL import Image,ImageStat
 
 class AnomalyDetection:
     def __init__(self):
@@ -14,7 +15,7 @@ class AnomalyDetection:
         variance = blur_map.var()
         return blur_map, variance
     
-    def isBlurred(self, image_path, threshold):
+    def isBlurred(self, image_path, threshold=100):
         image = cv2.imread(image_path)
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         blur_map ,laplacian_variance = self.variance_of_laplacian(gray)
@@ -38,7 +39,7 @@ class AnomalyDetection:
         print("Noise amount -> sigma: ",sigma)
         return sigma
 
-    def isNoisy(self, image_path, threshold):
+    def isNoisy(self, image_path, threshold=8.0):
          image = cv2.imread(image_path)
          gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)    
          noise = self.estimate_noise(gray)
@@ -50,7 +51,8 @@ class AnomalyDetection:
         # print('mean: ',np.array(s).mean())
         std_s = np.array(s).std()
         # print('std(s): ',s)
-        if np.all(s <  5) or std_s < 20:
+        print(s)
+        if np.all(s == 0) or std_s < 20:
             return std_s, True
         else:
             return std_s,False
@@ -75,6 +77,19 @@ class AnomalyDetection:
         if diff > threshold or isGrey:
             return std, False
         return std, True
+    
+    def brightness(self, image_path):
+        image = Image.open(image_path).convert('L')
+        stat = ImageStat.Stat(image)
+        return stat.rms[0]
+
+    def isLightBalanced(self,image_path):
+        # RMS Pixel Brightness
+        light = int(self.brightness(image_path))
+        print('RMS Pixel Brightness: ',light)
+        if 120 <= light <= 170:
+            return True
+        return False
        
   
 
@@ -85,13 +100,17 @@ if __name__ == '__main__':
     detect = AnomalyDetection()
     input_folder = "input"
     image_paths = list(paths.list_images(input_folder))
+
+    # For testing LightBalance
+    res = detect.isLightBalanced('tree-surf--thumb.jpg')
+    print(res)
     # img = Image.open('inputs/images (5).jpg')
     # img_conv = detect.convert_to_srgb(img)
     # image = cv2.imread("inputs/warm1.jpeg")
     # img = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-    std, res = detect.isColorBalanced(image_path="warms/warmed_50.jpeg" )
-    print('std: ',std)
-    print(res)
+    # std, res = detect.isColorBalanced(image_path="grey4.jpeg" )
+    # print('std: ',std)
+    # print(res)
     # warmStd = []
     # for path in image_paths:
     #     std, result = detect.isColorBalanced(path)
@@ -107,6 +126,7 @@ if __name__ == '__main__':
     # for image in image_paths:
     #     is_blurred = detect.isBlurred(image_path=image, threshold=100)
     #     print(image, "Blurred: ", is_blurred)
+
     # for image in image_paths:
     #     is_noisy = detect.isNoisy(image_path=image, threshold=8.0)
     #     print("image name:",image.split('/')[-1], "Noisy:",is_noisy)
